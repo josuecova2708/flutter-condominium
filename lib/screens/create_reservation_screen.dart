@@ -91,18 +91,25 @@ class _CreateReservationScreenState extends State<CreateReservationScreen> {
                           items: reservationService.availableAreas.map((area) {
                             return DropdownMenuItem<Area>(
                               value: area,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(area.nombre),
-                                  Text(
-                                    area.precioFormateado + '/hora',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey[600],
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 4),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      area.nombre,
+                                      style: const TextStyle(fontSize: 14),
                                     ),
-                                  ),
-                                ],
+                                    Text(
+                                      area.precioFormateado + '/hora',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey[600],
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             );
                           }).toList(),

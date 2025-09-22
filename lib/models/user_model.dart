@@ -30,8 +30,8 @@ class User {
       email: json['email'] ?? '',
       firstName: json['first_name'] ?? '',
       lastName: json['last_name'] ?? '',
-      role: json['role'],
-      condominio: json['condominio'],
+      role: json['role_name'], // Usar role_name que es String
+      condominio: json['condominio_name'], // Usar condominio_name que es String
       isVerified: json['is_verified'] ?? false,
       fullName: '${json['first_name'] ?? ''} ${json['last_name'] ?? ''}',
       propietarioId: json['propietario_id'],

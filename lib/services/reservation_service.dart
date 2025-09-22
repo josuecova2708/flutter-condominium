@@ -16,6 +16,7 @@ class ReservationService extends ChangeNotifier {
 
   List<Area> get areas => _areas;
   List<Reservation> get userReservations => _userReservations;
+  List<Reservation> get allReservations => _userReservations; // Mismo endpoint, pero ahora devuelve todas
   bool get isLoading => _isLoading;
   String? get error => _error;
 

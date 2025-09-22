@@ -23,11 +23,18 @@ class _ReservationsScreenState extends State<ReservationsScreen> {
     final authService = Provider.of<AuthService>(context, listen: false);
     final reservationService = Provider.of<ReservationService>(context, listen: false);
 
+    print('Debug - Loading reservations...');
     if (authService.isAuthenticated) {
       final token = authService.accessToken;
       if (token != null) {
-        await reservationService.loadUserReservations(token);
+        print('Debug - Token exists, calling loadUserReservations');
+        final success = await reservationService.loadUserReservations(token);
+        print('Debug - loadUserReservations success: $success');
+      } else {
+        print('Debug - No token available');
       }
+    } else {
+      print('Debug - User not authenticated');
     }
   }
 
@@ -83,9 +90,25 @@ class _ReservationsScreenState extends State<ReservationsScreen> {
             );
           }
 
-          final reservations = reservationService.userReservations;
+          final allReservations = reservationService.allReservations;
+          final currentUserName = authService.user?.fullName.trim();
 
-          if (reservations.isEmpty) {
+          print('Debug - currentUserName: $currentUserName');
+          print('Debug - allReservations count: ${allReservations.length}');
+          if (allReservations.isNotEmpty) {
+            print('Debug - first reservation propietario_nombre: ${allReservations.first.propietarioNombre}');
+          }
+
+          // Dividir reservas en "Mis Reservas" y "Otras Reservas" usando el nombre
+          final myReservations = allReservations.where((r) =>
+            r.propietarioNombre?.trim() == currentUserName).toList();
+          final otherReservations = allReservations.where((r) =>
+            r.propietarioNombre?.trim() != currentUserName).toList();
+
+          print('Debug - myReservations count: ${myReservations.length}');
+          print('Debug - otherReservations count: ${otherReservations.length}');
+
+          if (allReservations.isEmpty) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -97,7 +120,7 @@ class _ReservationsScreenState extends State<ReservationsScreen> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'No tienes reservas',
+                    'No hay reservas',
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
@@ -106,7 +129,7 @@ class _ReservationsScreenState extends State<ReservationsScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Crea tu primera reserva tocando el botón +',
+                    'Crea la primera reserva tocando el botón +',
                     style: TextStyle(
                       color: Colors.grey[500],
                     ),
@@ -118,13 +141,115 @@ class _ReservationsScreenState extends State<ReservationsScreen> {
 
           return RefreshIndicator(
             onRefresh: _loadReservations,
-            child: ListView.builder(
+            child: ListView(
               padding: const EdgeInsets.all(16),
-              itemCount: reservations.length,
-              itemBuilder: (context, index) {
-                final reservation = reservations[index];
-                return _buildReservationCard(reservation, authService);
-              },
+              children: [
+                // Sección "Mis Reservas"
+                if (myReservations.isNotEmpty) ...[
+                  Container(
+                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.blue[50],
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.blue[200]!),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.person, color: Colors.blue[700], size: 20),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Mis Reservas',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.blue[800],
+                          ),
+                        ),
+                        const Spacer(),
+                        Chip(
+                          label: Text('${myReservations.length}'),
+                          backgroundColor: Colors.blue[100],
+                          labelStyle: TextStyle(color: Colors.blue[800]),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  ...myReservations.map((reservation) =>
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _buildReservationCard(reservation, authService, isMyReservation: true),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                ],
+
+                // Sección "Otras Reservas"
+                if (otherReservations.isNotEmpty) ...[
+                  Container(
+                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[50],
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.grey[300]!),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.people, color: Colors.grey[700], size: 20),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Otras Reservas',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey[700],
+                          ),
+                        ),
+                        const Spacer(),
+                        Chip(
+                          label: Text('${otherReservations.length}'),
+                          backgroundColor: Colors.grey[200],
+                          labelStyle: TextStyle(color: Colors.grey[700]),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  ...otherReservations.map((reservation) =>
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _buildReservationCard(reservation, authService, isMyReservation: false),
+                    ),
+                  ),
+                ],
+
+                // Si solo hay reservas de otros y ninguna propia
+                if (myReservations.isEmpty && otherReservations.isNotEmpty)
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.blue[50],
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.blue[200]!),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.info_outline, color: Colors.blue[700]),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'No tienes reservas aún. ¡Crea tu primera reserva!',
+                            style: TextStyle(
+                              color: Colors.blue[800],
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
             ),
           );
         },
@@ -144,7 +269,7 @@ class _ReservationsScreenState extends State<ReservationsScreen> {
     );
   }
 
-  Widget _buildReservationCard(Reservation reservation, AuthService authService) {
+  Widget _buildReservationCard(Reservation reservation, AuthService authService, {bool isMyReservation = true}) {
     Color statusColor;
     IconData statusIcon;
 
@@ -167,15 +292,19 @@ class _ReservationsScreenState extends State<ReservationsScreen> {
     }
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      elevation: 4,
+      elevation: isMyReservation ? 4 : 2,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
+        side: isMyReservation ? BorderSide(color: Colors.blue[200]!, width: 1) : BorderSide.none,
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: () => _showReservationDetails(reservation, authService),
-        child: Padding(
+        onTap: isMyReservation ? () => _showReservationDetails(reservation, authService) : null,
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            color: isMyReservation ? null : Colors.grey[50],
+          ),
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -243,16 +372,52 @@ class _ReservationsScreenState extends State<ReservationsScreen> {
                     style: TextStyle(color: Colors.grey[700]),
                   ),
                   const Spacer(),
-                  Text(
-                    reservation.precioFormateado,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blue[700],
+                  if (isMyReservation)
+                    Text(
+                      reservation.precioFormateado,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue[700],
+                      ),
+                    )
+                  else
+                    Text(
+                      'Ocupado',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.grey[600],
+                      ),
                     ),
-                  ),
                 ],
               ),
+
+              // Mostrar información adicional para reservas de otros
+              if (!isMyReservation && reservation.propietarioNombre != null) ...[
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[200],
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.person, size: 14, color: Colors.grey[600]),
+                      const SizedBox(width: 4),
+                      Text(
+                        reservation.propietarioNombre!,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[700],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ],
           ),
         ),
