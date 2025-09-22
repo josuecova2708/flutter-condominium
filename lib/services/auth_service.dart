@@ -15,6 +15,7 @@ class AuthService extends ChangeNotifier {
   bool _isLoading = true;
 
   User? get user => _user;
+  String? get accessToken => _accessToken;
   bool get isAuthenticated => _accessToken != null && _user != null;
   bool get isLoading => _isLoading;
 
@@ -93,7 +94,9 @@ class AuthService extends ChangeNotifier {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        print('Profile data received: $data'); // Debug print
         _user = User.fromJson(data);
+        print('User propietarioId: ${_user?.propietarioId}'); // Debug print
       } else {
         // Token might be expired, clear stored data
         await logout();

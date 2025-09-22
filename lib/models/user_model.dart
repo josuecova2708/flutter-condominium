@@ -8,6 +8,7 @@ class User {
   final String? condominio;
   final bool isVerified;
   final String fullName;
+  final int? propietarioId;
 
   User({
     required this.id,
@@ -19,6 +20,7 @@ class User {
     this.condominio,
     required this.isVerified,
     required this.fullName,
+    this.propietarioId,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -32,6 +34,7 @@ class User {
       condominio: json['condominio'],
       isVerified: json['is_verified'] ?? false,
       fullName: '${json['first_name'] ?? ''} ${json['last_name'] ?? ''}',
+      propietarioId: json['propietario_id'],
     );
   }
 
