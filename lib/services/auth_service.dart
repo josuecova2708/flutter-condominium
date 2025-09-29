@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user_model.dart';
+import 'notification_service.dart';
 
 class AuthService extends ChangeNotifier {
   static const String baseUrl = 'https://backend-condo-production.up.railway.app';
@@ -66,6 +67,14 @@ class AuthService extends ChangeNotifier {
 
         await _storeTokens();
 
+        // Registrar token FCM después del login exitoso
+        try {
+          await NotificationService.registerFCMToken(_accessToken!);
+        } catch (e) {
+          print('Error registrando token FCM: $e');
+          // No hacer fallar el login si falla el registro del token
+        }
+
         _isLoading = false;
         notifyListeners();
         return true;
@@ -97,6 +106,13 @@ class AuthService extends ChangeNotifier {
         print('Profile data received: $data'); // Debug print
         _user = User.fromJson(data);
         print('User propietarioId: ${_user?.propietarioId}'); // Debug print
+
+        // Registrar token FCM si el perfil se cargó exitosamente
+        try {
+          await NotificationService.registerFCMToken(_accessToken!);
+        } catch (e) {
+          print('Error registrando token FCM: $e');
+        }
       } else {
         // Token might be expired, clear stored data
         await logout();

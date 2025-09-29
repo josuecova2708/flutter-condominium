@@ -5,5 +5,8 @@
 .packages
 build/
 
+# Android local files
+android/local.properties
+
 # Ignorar navegadores temporales
 chrome-device/
